@@ -22,13 +22,13 @@ class Login extends React.Component {
 
   componentWillMount() {
     if (this.props.loggedIn) {
-      return this.props.history.push('/profile');
+      return this.props.history.push('/dashboard');
     }
   }
 
   shouldComponentUpdate(nextProps) {
     if (nextProps.loggedIn) {
-      nextProps.history.push('/profile');
+      nextProps.history.push('/dashboard');
       return false;
     }
     return true;
