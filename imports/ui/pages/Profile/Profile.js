@@ -106,9 +106,6 @@ export default withTracker(() => {
   const counter = Counters.findOne({ _id: Meteor.userId() });
   const countersReady = countersSub.ready() && !!counter;
   return {
-    // remote example (if using ddp)
-    // usersReady,
-    // users,
     countersReady,
     counter,
   };

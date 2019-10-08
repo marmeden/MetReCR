@@ -4,6 +4,7 @@
 
 import { Accounts } from 'meteor/accounts-base';
 import Counters from '../../api/counters/counters.js';
+import Bookings from '../../api/bookings/bookings.js';
 
 Accounts.onCreateUser((options, user) => {
   // init counter at 0

@@ -4,7 +4,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 // collection
-//import Counters from '../../../api/counters/counters';
+import Counters from '../../../api/counters/counters';
+import Bookings from '../../../api/bookings/bookings';
 
 // remote example (if using ddp)
 /*
@@ -20,6 +21,10 @@ import Text from '../../components/Text';
 import './Dashboard.scss';
 
 class Dashboard extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
   componentWillMount() {
     if (!this.props.loggedIn) {
       return this.props.history.push('/login');
@@ -34,14 +39,21 @@ class Dashboard extends React.Component {
     return true;
   }
 
+  renderBookings () {
+    let mybookings = this.props.bookings;
+    console.log("hey");
+    console.log(mybookings);
+
+    return mybookings.map((singlebooking) => {
+      return (
+        <li>{singlebooking}</li>
+      );
+    })
+  }
+
   render() {
     const {
       loggedIn,
-      // remote example (if using ddp)
-      // usersReady,
-      // users,
-      //countersReady,
-      //counter,
     } = this.props;
 
     // eslint-disable-line
@@ -56,37 +68,23 @@ class Dashboard extends React.Component {
     return (
       <div className="dashboard-page">
         <h1>This is dashboard</h1>
+        <ul>
+          {this.renderBookings()}
+        </ul>
       </div>
     );
   }
 }
 
-Dashboard.defaultProps = {
-  // users: null, remote example (if using ddp)
-  counter: null,
-};
-
-Dashboard.propTypes = {
-
-};
-
 export default withTracker(() => {
-  // remote example (if using ddp)
-  /*
-  const usersSub = Remote.subscribe('users.friends'); // publication needs to be set on remote server
-  const users = Users.find().fetch();
-  const usersReady = usersSub.ready() && !!users;
-  */
+  // bookings here
+  Meteor.subscribe('bookings');
 
-  // counters example
-  //const countersSub = Meteor.subscribe('counters.user');
-  //const counter = Counters.findOne({ _id: Meteor.userId() });
-  //const countersReady = countersSub.ready() && !!counter;
+  console.log("asdsadafdsafds");
+  console.log(Bookings.find({}).fetch());
+  console.log("end");
+
   return {
-    // remote example (if using ddp)
-    // usersReady,
-    // users,
-    //countersReady,
-    //counter,
+    bookings: Bookings.find({}).fetch(),
   };
 })(Dashboard);
