@@ -40,13 +40,14 @@ class Dashboard extends React.Component {
   }
 
   renderBookings () {
-    let mybookings = this.props.bookings;
+    //let mybookings = this.props.bookings;
+    let mybookings = this.props.today;
     console.log("hey");
-    console.log(mybookings);
+    console.log(this.props);
 
     return mybookings.map((singlebooking) => {
       return (
-        <li>{singlebooking}</li>
+        <li>{singlebooking.nombre}</li>
       );
     })
   }
@@ -85,6 +86,7 @@ export default withTracker(() => {
   console.log("end");
 
   return {
-    bookings: Bookings.find({}).fetch(),
+    bookings: Bookings.find().fetch(),
+    today: Bookings.find({fechareco: {$gte: new Date()}}).fetch()
   };
 })(Dashboard);

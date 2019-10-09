@@ -12,3 +12,4 @@ import '../../api/counters/methods.js';
 import '../../api/counters/publications.js';
 
 // import another api
+import '../../api/bookings/publications.js';
