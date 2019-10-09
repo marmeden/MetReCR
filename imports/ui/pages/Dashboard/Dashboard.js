@@ -47,7 +47,7 @@ class Dashboard extends React.Component {
 
     return mybookings.map((singlebooking) => {
       return (
-        <li>{singlebooking.nombre}</li>
+        <li key={singlebooking._id}>{singlebooking.nombre}</li>
       );
     })
   }
