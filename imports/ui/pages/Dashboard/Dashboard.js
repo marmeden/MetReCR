@@ -18,6 +18,7 @@ import Users from '../../../api/remote/users';
 import Modal, { Button } from '../../components/Modal/Modal';
 import AddCountButton from '../../components/Button';
 import Text from '../../components/Text';
+import WeeklyBookings from '../../components/WeeklyBookings';
 
 import './Dashboard.scss';
 import { start } from 'repl';
@@ -37,14 +38,9 @@ const SearchBar = () => (
 );
 
 
-const Weekly = ({ week }) => (
-  <div>
-    Hola
-    {week}
-  </div>
-);
-
 class Dashboard extends React.Component {
+  _isMounted = false;
+
   constructor(props) {
     super(props);
   }
@@ -77,22 +73,36 @@ class Dashboard extends React.Component {
     })
   }
 
-  render() {
-    const {
-      loggedIn,
-    } = this.props;
+  renderWeek () {
+    if(this.props.week.length) {
+      let myWeek = this.props.weekSplit;
 
-    console.log("props");
-    console.log(this.props);
-    
-    if (!loggedIn) {
-      return null;
+      return (
+        <div>
+          <ul>
+          {this.props.weekSplit.map((item, index) => 
+            <li key={index}>
+              <span>{item[0].length} ||| {item[1].length}</span>
+            </li>
+          )}
+          </ul>
+        </div>
+      )
+    } else {
+      return (
+        <div>Loading</div>
+      )
     }
+  }
+
+  render() {
     return (
       <div className="dashboard-page">
         <h1>This is dashboard</h1>
         <SearchBar></SearchBar>
-        <Weekly week={this.props.test}></Weekly>
+        <div>
+          {this.renderWeek()}
+        </div>
         <ul>
           {this.renderBookings()}
         </ul>
@@ -102,12 +112,50 @@ class Dashboard extends React.Component {
 }
 
 export default withTracker(() => {
+
+  let ownCars = [
+       "Hyundai i20 Active Azul",
+       "Opel Corsa 1.3 Amarillo",
+       "Opel Corsa 1.3 Gris",
+       "Opel Corsa Rojo Full-Equip",
+       "Fiat 500 Negro",
+       "Fiat 500 Rojo",
+       "Renault Scenic",
+       "WifiCar",
+       "Europcar Propio",
+       "Sixt Propio",
+       "Avis Propio",
+       "Opel Zafira Blanco",
+       "Hertz Propio",
+       "Peugeot 208 Gris",
+       "VW Polo Europcar",
+       "Peugeot 208 Gris Europcar Propio",
+       "Ford Torneo",
+       "Toyota automático Europcar",
+       "Seat Leon Europcar",
+       "Kya Rio Blanco",
+       "Ford Fiesta",
+       "Fiat Tipo Sedan",
+       "Volkswagen Crafter",
+       "Kya Rio Verde",
+       "Kya Stonic Gris",
+       "Fiat 500 Negro-Amarillo",
+       "Hyundai i20 Active Blanco",
+       "Citroen C3",
+       "Dacia Sandero",
+       "Citroen C-Elysee 1.6 HDI"
+  ]
+
+  function isWithOwnCars(car) {
+    if (ownCars.includes(car)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
   // bookings here
   Meteor.subscribe('bookings');
 
-  console.log("allbookings");
-  console.log(Bookings.find({}).fetch());
-  console.log("end");
   const allBookings = Bookings.find({}).fetch();
 
   // Week Logic
@@ -120,28 +168,41 @@ export default withTracker(() => {
   const weekTemp = [[], [], [], [], [], [], []];
   let ini = moment(startWeek);
   let fin = moment(endWeek);
-  
-  console.log(ini);
-  console.log(fin);
 
   weeklyBookings.forEach((book) => {
-    console.log(book.fechareco.getDate());
-    console.log(moment(book.fechareco).format("YYYY"));
-    console.log(Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days')));
     weekTemp[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
   });
+
+
 
   console.log("endddd");
 
   console.log(weekTemp);
 
+  let weekTempSplit = weekTemp.map((day) => {
+    let tempDay = [[], []];
 
+    day.forEach((booking) => {
+      if (isWithOwnCars(booking.company)) {
+        tempDay[0].push(booking);
+      } else {
+        tempDay[1].push(booking);
+      }
+    });
 
+    return tempDay;
+  });
+
+  console.log("fdgdg");
+
+  console.log(weekTempSplit);
 
   return {
     bookings: Bookings.find().fetch(),
     today: Bookings.find({fechareco: {$gte: new Date()}}).fetch(),
     week: weeklyBookings,
-    test: "esto es una prueba"
+    weekSplit: weekTempSplit,
+    test: "esto es una prueba",
+    loaded: true
   };
 })(Dashboard);
