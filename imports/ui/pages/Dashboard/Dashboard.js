@@ -63,8 +63,6 @@ class Dashboard extends React.Component {
     //let mybookings = this.props.bookings;
     //let mybookings = this.props.today;
     let mybookings = this.props.week;
-    console.log("hey");
-    console.log(this.props);
 
     return mybookings.map((singlebooking) => {
       return (
@@ -100,6 +98,7 @@ class Dashboard extends React.Component {
       <div className="dashboard-page">
         <h1>This is dashboard</h1>
         <SearchBar></SearchBar>
+        <WeeklyBookings week={this.props.weekSplit}></WeeklyBookings>
         <div>
           {this.renderWeek()}
         </div>
@@ -173,12 +172,6 @@ export default withTracker(() => {
     weekTemp[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
   });
 
-
-
-  console.log("endddd");
-
-  console.log(weekTemp);
-
   let weekTempSplit = weekTemp.map((day) => {
     let tempDay = [[], []];
 
@@ -193,9 +186,6 @@ export default withTracker(() => {
     return tempDay;
   });
 
-  console.log("fdgdg");
-
-  console.log(weekTempSplit);
 
   return {
     bookings: Bookings.find().fetch(),
