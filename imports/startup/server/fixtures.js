@@ -3,6 +3,7 @@
 import { Meteor } from 'meteor/meteor';
 import Counters from '../../api/counters/counters.js';
 import Bookings from '../../api/bookings/bookings.js';
+import Fleet from '../../api/fleet/fleet.js';
 
 Meteor.startup(() => {
   // check if db is empty, fill with fake data for testing

@@ -3,10 +3,11 @@ import { withTracker } from 'meteor/react-meteor-data';
 import moment from 'moment';
 import React from 'react';
 import PropTypes from 'prop-types';
-
+import * as crHelpers from '../../../startup/client/cr-methods.js';
 // collection
 import Counters from '../../../api/counters/counters';
 import Bookings from '../../../api/bookings/bookings';
+import Fleet from '../../../api/fleet/fleet';
 
 // remote example (if using ddp)
 /*
@@ -19,6 +20,7 @@ import Modal, { Button } from '../../components/Modal/Modal';
 import AddCountButton from '../../components/Button';
 import Text from '../../components/Text';
 import WeeklyBookings from '../../components/WeeklyBookings';
+import CardWidget from '../../components/CardWidget';
 
 import './Dashboard.scss';
 import { start } from 'repl';
@@ -99,8 +101,15 @@ class Dashboard extends React.Component {
         <h1>This is dashboard</h1>
         <SearchBar></SearchBar>
         <WeeklyBookings week={this.props.weekSplit}></WeeklyBookings>
+        <CardWidget title="Bookings today" number={this.props.today.flat().length }></CardWidget>
+        <CardWidget title="Bookings ongoing" number={this.props.ongoing.length }></CardWidget>
+        <CardWidget title="Bookings pending" number={this.props.pending.length }></CardWidget>
+        <CardWidget title="Bookings month" number={this.props.monthly.length }></CardWidget>
+        <p>-----------------------------</p>
+        <CardWidget title="Fleet Busy" number={this.props.ongoingNumber }></CardWidget>
+        <CardWidget title="Next Free" number="{this.props.nextAvailable.length }"></CardWidget>
+        <p>-----------------------------</p>
         <div>
-          {this.renderWeek()}
         </div>
         <ul>
           {this.renderBookings()}
@@ -111,55 +120,15 @@ class Dashboard extends React.Component {
 }
 
 export default withTracker(() => {
-
-  let ownCars = [
-       "Hyundai i20 Active Azul",
-       "Opel Corsa 1.3 Amarillo",
-       "Opel Corsa 1.3 Gris",
-       "Opel Corsa Rojo Full-Equip",
-       "Fiat 500 Negro",
-       "Fiat 500 Rojo",
-       "Renault Scenic",
-       "WifiCar",
-       "Europcar Propio",
-       "Sixt Propio",
-       "Avis Propio",
-       "Opel Zafira Blanco",
-       "Hertz Propio",
-       "Peugeot 208 Gris",
-       "VW Polo Europcar",
-       "Peugeot 208 Gris Europcar Propio",
-       "Ford Torneo",
-       "Toyota automático Europcar",
-       "Seat Leon Europcar",
-       "Kya Rio Blanco",
-       "Ford Fiesta",
-       "Fiat Tipo Sedan",
-       "Volkswagen Crafter",
-       "Kya Rio Verde",
-       "Kya Stonic Gris",
-       "Fiat 500 Negro-Amarillo",
-       "Hyundai i20 Active Blanco",
-       "Citroen C3",
-       "Dacia Sandero",
-       "Citroen C-Elysee 1.6 HDI"
-  ]
-
-  function isWithOwnCars(car) {
-    if (ownCars.includes(car)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
   // bookings here
   Meteor.subscribe('bookings');
+  Meteor.subscribe('fleet');
 
   const allBookings = Bookings.find({}).fetch();
 
   // Week Logic
   let startWeek = new Date();
-  startWeek.setDate(startWeek.getDate() - 3);
+  startWeek.setDate(startWeek.getDate() - 2);
   let endWeek = new Date();
   endWeek.setDate(endWeek.getDate() + 4);
   const weeklyBookings =  Bookings.find({fechareco: {$gte: startWeek, $lte: endWeek}}, {sort: {fechareco: 1}}).fetch();
@@ -168,15 +137,26 @@ export default withTracker(() => {
   let ini = moment(startWeek);
   let fin = moment(endWeek);
 
+  let today = new Date();
+  let todayIni = moment(today).startOf('day');
+  let tomorrow = today.setDate(today.getDate() + 1)
+  let tomorrowIni = moment(tomorrow).startOf('day');
+
+  console.log("month");
+  console.log(moment().startOf('month'));
+  console.log(moment().endOf('month'));
+
   weeklyBookings.forEach((book) => {
     weekTemp[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
   });
+
+  console.log(weeklyBookings);
 
   let weekTempSplit = weekTemp.map((day) => {
     let tempDay = [[], []];
 
     day.forEach((booking) => {
-      if (isWithOwnCars(booking.company)) {
+      if (crHelpers.isWithOwnCars(booking.company)) {
         tempDay[0].push(booking);
       } else {
         tempDay[1].push(booking);
@@ -186,13 +166,80 @@ export default withTracker(() => {
     return tempDay;
   });
 
+  let monthIni = moment(new Date()).startOf('month');
+  let monthEnd = moment(new Date()).endOf('month');
+
+  let Own = 0;
+  Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechareco: 1}}).fetch().forEach((booking) => {
+    if(crHelpers.isWithOwnCars(booking.company)) Own++;
+  });
+
+  console.log("prox devols");
+  console.log(Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechadevo: 1}}).fetch());
+  let nextBookingFinish = Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechadevo: 1}}).fetch().find((booking) => {
+    return crHelpers.isWithOwnCars(booking.company);
+  });
+
+
+  console.log(nextBookingFinish);
+
+  let nextBookingRun = Bookings.find({fechareco: {$gte: new Date()}}, {sort: {fechareco: 1}}).fetch().find((booking) => {
+    return crHelpers.isWithOwnCars(booking.company);
+  });
+
+  console.log(nextBookingRun);
+
+  const weekTempIncomes = [[], [], [], [], [], [], []];
+
+  weeklyBookings.forEach((book) => {
+    weekTempIncomes[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
+  });
+
+  let weekTempIncomesSplit = weekTempIncomes.map((day) => {
+    let tempDay = [0, 0];
+
+    day.forEach((booking) => {
+      if (crHelpers.isWithOwnCars(booking.company)) {
+        tempDay[0] = parseFloat(tempDay[0]) + parseFloat(booking.euroscarflet);
+      } else {
+        tempDay[1] = parseFloat(tempDay[1]) + parseFloat(booking.euroscarflet);
+      }
+    });
+
+    return tempDay;
+  });
+
+  console.log("costes");
+  console.log(weekTempIncomesSplit);
+
+  console.log("today");
+  console.log(weekTempSplit[2].flat());
+
+  let todayFacturado = 0;
+  weekTempSplit[2].flat().forEach(element => {
+      todayFacturado = todayFacturado + parseInt(element.euroscarflet);
+  });
+
+  console.log("facturado hoy", todayFacturado);
+  let mymonthly = Bookings.find({fechareco: {$gte: new Date(monthIni), $lt: new Date(monthEnd)}}).fetch();
+
+  let monthlyFacturado = 0;
+  mymonthly.forEach(element => {
+      monthlyFacturado = monthlyFacturado + parseInt(element.euroscarflet);
+  });
+  console.log("facturado mes", monthlyFacturado);
 
   return {
     bookings: Bookings.find().fetch(),
-    today: Bookings.find({fechareco: {$gte: new Date()}}).fetch(),
+    pending: Bookings.find({pagada: false, company: "Concretar"}).fetch(),
+    ongoing: Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechareco: 1}}).fetch(),
+    ongoingNumber: Own,
+    monthly: Bookings.find({fechareco: {$gte: new Date(monthIni), $lt: new Date(monthEnd)}}).fetch(),
+    today: weekTempSplit[2],
     week: weeklyBookings,
     weekSplit: weekTempSplit,
     test: "esto es una prueba",
-    loaded: true
+    loaded: true,
+    nextAvailable: nextBookingFinish
   };
 })(Dashboard);

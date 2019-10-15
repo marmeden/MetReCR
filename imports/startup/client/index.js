@@ -3,6 +3,7 @@ import React from 'react';
 import { render } from 'react-dom';
 
 import 'popper.js';
+import './cr-methods.js';
 import 'bootstrap';
 import './styles/main.scss';
 
