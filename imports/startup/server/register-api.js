@@ -14,3 +14,5 @@ import '../../api/counters/publications.js';
 // import another api
 import '../../api/bookings/publications.js';
 import '../../api/fleet/publications.js';
+import '../../api/workers/publications.js';
+import '../../api/tasks/publications.js';

@@ -7,10 +7,15 @@ import PropTypes from 'prop-types';
 import * as crHelpers from '../../../startup/client/cr-methods.js';
 import * as bookingsAPI from '../../../api/bookings/methods';
 import * as fleetAPI from '../../../api/fleet/methods';
+import * as workersAPI from '../../../api/workers/methods';
+import * as tasksAPI from '../../../api/tasks/methods';
+
 // collection
 import Counters from '../../../api/counters/counters';
 import Bookings from '../../../api/bookings/bookings';
 import Fleet from '../../../api/fleet/fleet';
+import Workers from '../../../api/workers/workers';
+import Tasks from '../../../api/tasks/tasks';
 
 // remote example (if using ddp)
 /*
@@ -117,6 +122,16 @@ class Dashboard extends React.Component {
         <CardWidget title={moment().format('MMMM') + " invoiced"} number={this.props.monthInvoiced + "€"}></CardWidget>
         <CardWidget title={moment().format('Q') + " trimestre invoiced"} number={this.props.quarterInvoiced + "€"}></CardWidget>
         <CardWidget title={moment().format('YYYY') + " invoiced"} number={this.props.yearInvoiced + "€ in " + this.props.yearBookings.length+ " bookings"}></CardWidget>
+        <p>-----------------------------</p>
+        <CardWidget title="Today Tasks" number={this.props.todaysTasks.length}></CardWidget>
+        <CardWidget title="Month Tasks" number={this.props.monthTasks.length}></CardWidget>
+        <CardWidget title="Quarter Tasks" number={this.props.quarterTasks.length}></CardWidget>
+        <CardWidget title="Year Tasks" number={this.props.yearTasks.length}></CardWidget>
+        <p>-----------------------------</p>
+        <CardWidget title="Today Expenses" number={this.props.todaysExp + "€"}></CardWidget>
+        <CardWidget title="Month Expenses" number={this.props.monthExp + "€"}></CardWidget>
+        <CardWidget title="Quarter Expenses" number={this.props.quarterExp + "€"}></CardWidget>
+        <CardWidget title="Year Expenses" number={this.props.yearExp + "€"}></CardWidget>
         <div>
         </div>
         <ul>
@@ -131,10 +146,14 @@ export default withTracker(() => {
   // bookings here
   Meteor.subscribe('bookings');
   Meteor.subscribe('fleet');
+  Meteor.subscribe('workers');
+  Meteor.subscribe('tasks');
 
 
   let monthIni = moment(new Date()).startOf('month');
   let monthEnd = moment(new Date()).endOf('month');
+
+ 
 
 
   /*const weekTempIncomes = [[], [], [], [], [], [], []];
@@ -178,7 +197,7 @@ export default withTracker(() => {
   console.log("facturado mes", monthlyFacturado);
   */
 
-  console.log("test api", bookingsAPI.todayInvoiced());
+  console.log("test api", workersAPI.workersBusyToday());
 
 
   /////////////////////
@@ -204,5 +223,15 @@ export default withTracker(() => {
     quarterInvoiced: bookingsAPI.quarterInvoiced(),
     yearInvoiced: bookingsAPI.yearInvoiced(),
     yearBookings: bookingsAPI.createdYearBookings(),
+
+    todaysTasks: tasksAPI.todaysTasks(),
+    monthTasks: tasksAPI.monthTasks(),
+    quarterTasks: tasksAPI.quarterTasks(),
+    yearTasks: tasksAPI.yearTasks(),
+
+    todaysExp: tasksAPI.todaysExpenses(),
+    monthExp: tasksAPI.monthExpenses(),
+    quarterExp: tasksAPI.quarterExpenses(),
+    yearExp: tasksAPI.yearExpenses(),
   };
 })(Dashboard);
