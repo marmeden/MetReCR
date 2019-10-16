@@ -3,7 +3,10 @@ import { withTracker } from 'meteor/react-meteor-data';
 import moment from 'moment';
 import React from 'react';
 import PropTypes from 'prop-types';
+
 import * as crHelpers from '../../../startup/client/cr-methods.js';
+import * as bookingsAPI from '../../../api/bookings/methods';
+import * as fleetAPI from '../../../api/fleet/methods';
 // collection
 import Counters from '../../../api/counters/counters';
 import Bookings from '../../../api/bookings/bookings';
@@ -74,7 +77,7 @@ class Dashboard extends React.Component {
   }
 
   renderWeek () {
-    if(this.props.week.length) {
+    if(this.props.weekSplit.length) {
       let myWeek = this.props.weekSplit;
 
       return (
@@ -106,13 +109,18 @@ class Dashboard extends React.Component {
         <CardWidget title="Bookings pending" number={this.props.pending.length }></CardWidget>
         <CardWidget title="Bookings month" number={this.props.monthly.length }></CardWidget>
         <p>-----------------------------</p>
-        <CardWidget title="Fleet Busy" number={this.props.ongoingNumber }></CardWidget>
-        <CardWidget title="Next Free" number="{this.props.nextAvailable.length }"></CardWidget>
+        <CardWidget title="Fleet Busy" number={this.props.busy.length }></CardWidget>
+        <CardWidget title="Next Free" number={this.props.nextAvailableCar}></CardWidget>
+        <CardWidget title="Next Busy" number={this.props.nextBusyCar}></CardWidget>
         <p>-----------------------------</p>
+        <CardWidget title="Today Invoiced" number={this.props.todayInvoiced + "€"}></CardWidget>
+        <CardWidget title={moment().format('MMMM') + " invoiced"} number={this.props.monthInvoiced + "€"}></CardWidget>
+        <CardWidget title={moment().format('Q') + " trimestre invoiced"} number={this.props.quarterInvoiced + "€"}></CardWidget>
+        <CardWidget title={moment().format('YYYY') + " invoiced"} number={this.props.yearInvoiced + "€ in " + this.props.yearBookings.length+ " bookings"}></CardWidget>
         <div>
         </div>
         <ul>
-          {this.renderBookings()}
+          this.renderBookings()
         </ul>
       </div>
     );
@@ -124,72 +132,12 @@ export default withTracker(() => {
   Meteor.subscribe('bookings');
   Meteor.subscribe('fleet');
 
-  const allBookings = Bookings.find({}).fetch();
-
-  // Week Logic
-  let startWeek = new Date();
-  startWeek.setDate(startWeek.getDate() - 2);
-  let endWeek = new Date();
-  endWeek.setDate(endWeek.getDate() + 4);
-  const weeklyBookings =  Bookings.find({fechareco: {$gte: startWeek, $lte: endWeek}}, {sort: {fechareco: 1}}).fetch();
-
-  const weekTemp = [[], [], [], [], [], [], []];
-  let ini = moment(startWeek);
-  let fin = moment(endWeek);
-
-  let today = new Date();
-  let todayIni = moment(today).startOf('day');
-  let tomorrow = today.setDate(today.getDate() + 1)
-  let tomorrowIni = moment(tomorrow).startOf('day');
-
-  console.log("month");
-  console.log(moment().startOf('month'));
-  console.log(moment().endOf('month'));
-
-  weeklyBookings.forEach((book) => {
-    weekTemp[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
-  });
-
-  console.log(weeklyBookings);
-
-  let weekTempSplit = weekTemp.map((day) => {
-    let tempDay = [[], []];
-
-    day.forEach((booking) => {
-      if (crHelpers.isWithOwnCars(booking.company)) {
-        tempDay[0].push(booking);
-      } else {
-        tempDay[1].push(booking);
-      }
-    });
-
-    return tempDay;
-  });
 
   let monthIni = moment(new Date()).startOf('month');
   let monthEnd = moment(new Date()).endOf('month');
 
-  let Own = 0;
-  Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechareco: 1}}).fetch().forEach((booking) => {
-    if(crHelpers.isWithOwnCars(booking.company)) Own++;
-  });
 
-  console.log("prox devols");
-  console.log(Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechadevo: 1}}).fetch());
-  let nextBookingFinish = Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechadevo: 1}}).fetch().find((booking) => {
-    return crHelpers.isWithOwnCars(booking.company);
-  });
-
-
-  console.log(nextBookingFinish);
-
-  let nextBookingRun = Bookings.find({fechareco: {$gte: new Date()}}, {sort: {fechareco: 1}}).fetch().find((booking) => {
-    return crHelpers.isWithOwnCars(booking.company);
-  });
-
-  console.log(nextBookingRun);
-
-  const weekTempIncomes = [[], [], [], [], [], [], []];
+  /*const weekTempIncomes = [[], [], [], [], [], [], []];
 
   weeklyBookings.forEach((book) => {
     weekTempIncomes[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
@@ -228,18 +176,33 @@ export default withTracker(() => {
       monthlyFacturado = monthlyFacturado + parseInt(element.euroscarflet);
   });
   console.log("facturado mes", monthlyFacturado);
+  */
+
+  console.log("test api", bookingsAPI.todayInvoiced());
+
+
+  /////////////////////
+  /////////////////////
+
 
   return {
-    bookings: Bookings.find().fetch(),
-    pending: Bookings.find({pagada: false, company: "Concretar"}).fetch(),
-    ongoing: Bookings.find({fechareco: {$lte: new Date()}, fechadevo: {$gte: new Date()}}, {sort: {fechareco: 1}}).fetch(),
-    ongoingNumber: Own,
-    monthly: Bookings.find({fechareco: {$gte: new Date(monthIni), $lt: new Date(monthEnd)}}).fetch(),
-    today: weekTempSplit[2],
-    week: weeklyBookings,
-    weekSplit: weekTempSplit,
-    test: "esto es una prueba",
-    loaded: true,
-    nextAvailable: nextBookingFinish
+
+    weekSplit: bookingsAPI.unnaturalWeeklyBookingsSevenDaysSplit(),
+    today: bookingsAPI.todayBookings(),
+    ongoing: bookingsAPI.ongoingBookings(),
+    pending: bookingsAPI.pendingBookings(),
+    monthly: bookingsAPI.monthlyBookings(),
+    week: bookingsAPI.unnaturalWeeklyBookings(),
+
+    busy: fleetAPI.fleetBusyCars(),
+    nextAvailableCar: fleetAPI.nextAvailableCar(),
+    nextBusyCar: fleetAPI.nextBusyCar(),
+    carOfTheMonth: fleetAPI.carOfTheMonth(),
+
+    todayInvoiced: bookingsAPI.todayInvoiced(),
+    monthInvoiced: bookingsAPI.monthInvoiced(),
+    quarterInvoiced: bookingsAPI.quarterInvoiced(),
+    yearInvoiced: bookingsAPI.yearInvoiced(),
+    yearBookings: bookingsAPI.createdYearBookings(),
   };
 })(Dashboard);
