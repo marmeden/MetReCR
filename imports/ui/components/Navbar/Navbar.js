@@ -3,6 +3,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 
+import * as crHelpers from '../../../startup/client/cr-methods.js';
+
 import './Navbar.scss';
 
 const PublicNav = () => [
@@ -43,6 +45,13 @@ const LoggedInNav = () => (
       </NavLink>
     </li>
     <li className="nav-item">
+      <NavLink to="/bookings">
+        <button type="button" className="dropdown-item">
+          Bookings
+        </button>
+      </NavLink>
+    </li>
+    <li className="nav-item">
       <div className="dropdown-divider" />
     </li>
     <li className="nav-item">
@@ -68,9 +77,12 @@ const LoggedInNav = () => (
 const Status = ({ loggedIn }) => (
   <div className="my-2 mr-3">
     {loggedIn ? (
-      <span className="text-success">
-        <i className="fa fa-circle" />
-      </span>
+      <div>
+        <p>{crHelpers.getUserInitials()}</p>
+        <span className="text-success">
+          <i className="fa fa-circle" />
+        </span>
+      </div>
     ) : (
       <span className="text-secondary">
         <i className="fa fa-circle" />

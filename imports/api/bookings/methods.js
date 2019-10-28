@@ -80,6 +80,28 @@ export const unnaturalWeeklyBookingsSevenDays = () => {
   return weekTemp;
 }
 
+export const createdUnnaturalWeeklyBookingsSevenDays = () => {
+  let startWeek = new Date();
+  startWeek.setDate(startWeek.getDate() - 2);
+  let endWeek = new Date();
+  endWeek.setDate(endWeek.getDate() + 4);
+  const weeklyBookings =  Bookings.find({createdAt: {$gte: startWeek, $lte: endWeek}}, {sort: {createdAt: 1}}).fetch();
+
+  const weekTemp = [[], [], [], [], [], [], []];
+  let ini = moment(startWeek);
+  let fin = moment(endWeek);
+
+  let today = new Date();
+  let tomorrow = today.setDate(today.getDate() + 1)
+
+
+  weeklyBookings.forEach((book) => {
+    weekTemp[Math.abs(moment(book.fechareco).startOf('day').diff(ini.startOf('day'), 'days'))].push(book);
+  });
+
+  return weekTemp;
+}
+
 export const unnaturalWeeklyBookingsSevenDaysSplit = () => {
   let tempSplit = unnaturalWeeklyBookingsSevenDays();
   let weekSplit = tempSplit.map((day) => {
@@ -163,6 +185,18 @@ export const todayInvoiced = () => {
     todayFacturado = todayFacturado + parseFloat(booking.euroscarflet)
   })
   return Math.round((todayFacturado * 100) / 100)
+}
+
+export const weekInvoiced = () => {
+  let tempSplit = createdUnnaturalWeeklyBookingsSevenDays();
+  let weekSplit = tempSplit.map((day) => {
+    let tempDay = 0;
+    day.forEach((booking) => {
+      tempDay = tempDay + parseFloat(booking.euroscarflet);
+    });
+    return tempDay;
+  });
+  return weekSplit
 }
 
 export const monthInvoiced = () => {

@@ -56,6 +56,27 @@ export const workersBusyMonth = () => {
   return uniq
 }
 
+export const workerOfTheMonth = () => {
+  let monthTasks = tasksAPI.monthTasks();
+  let tempworkers = monthTasks.map((task) => task.worker);
+  
+  var workerCounter = tempworkers.reduce(function(prev, cur) {
+    prev[cur] = (prev[cur] || 0) + 1;
+    return prev;
+  }, {});
+
+  let workerCounterArr = Object.keys(workerCounter).map(function(key) {
+    return {
+      "name": key, 
+      "tasks": workerCounter[key]
+    };
+  });
+
+  workerCounterArr.sort((a,b) => (a.tasks < b.tasks) ? 1 : ((b.tasks < a.tasks) ? -1 : 0));
+  return workerCounterArr[0];
+}
+
+
 
 
 

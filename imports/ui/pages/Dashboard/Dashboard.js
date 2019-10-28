@@ -53,12 +53,21 @@ class Dashboard extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      loaded: false,
+
+    }
   }
 
   componentWillMount() {
+    console.log("will mount");
     if (!this.props.loggedIn) {
       return this.props.history.push('/login');
     }
+  }
+
+  componentDidMount() {
+    console.log("did mount");
   }
 
   shouldComponentUpdate(nextProps) {
@@ -104,55 +113,85 @@ class Dashboard extends React.Component {
   }
 
   render() {
-    return (
-      <div className="dashboard-page">
-        <h1>This is dashboard</h1>
-        <SearchBar></SearchBar>
-        <WeeklyBookings week={this.props.weekSplit}></WeeklyBookings>
-        <CardWidget title="Bookings today" number={this.props.today.flat().length }></CardWidget>
-        <CardWidget title="Bookings ongoing" number={this.props.ongoing.length }></CardWidget>
-        <CardWidget title="Bookings pending" number={this.props.pending.length }></CardWidget>
-        <CardWidget title="Bookings month" number={this.props.monthly.length }></CardWidget>
-        <p>-----------------------------</p>
-        <CardWidget title="Fleet Busy" number={this.props.busy.length }></CardWidget>
-        <CardWidget title="Next Free" number={this.props.nextAvailableCar}></CardWidget>
-        <CardWidget title="Next Busy" number={this.props.nextBusyCar}></CardWidget>
-        <p>-----------------------------</p>
-        <CardWidget title="Today Invoiced" number={this.props.todayInvoiced + "€"}></CardWidget>
-        <CardWidget title={moment().format('MMMM') + " invoiced"} number={this.props.monthInvoiced + "€"}></CardWidget>
-        <CardWidget title={moment().format('Q') + " trimestre invoiced"} number={this.props.quarterInvoiced + "€"}></CardWidget>
-        <CardWidget title={moment().format('YYYY') + " invoiced"} number={this.props.yearInvoiced + "€ in " + this.props.yearBookings.length+ " bookings"}></CardWidget>
-        <p>-----------------------------</p>
-        <CardWidget title="Today Tasks" number={this.props.todaysTasks.length}></CardWidget>
-        <CardWidget title="Month Tasks" number={this.props.monthTasks.length}></CardWidget>
-        <CardWidget title="Quarter Tasks" number={this.props.quarterTasks.length}></CardWidget>
-        <CardWidget title="Year Tasks" number={this.props.yearTasks.length}></CardWidget>
-        <p>-----------------------------</p>
-        <CardWidget title="Today Expenses" number={this.props.todaysExp + "€"}></CardWidget>
-        <CardWidget title="Month Expenses" number={this.props.monthExp + "€"}></CardWidget>
-        <CardWidget title="Quarter Expenses" number={this.props.quarterExp + "€"}></CardWidget>
-        <CardWidget title="Year Expenses" number={this.props.yearExp + "€"}></CardWidget>
-        <div>
+    console.log("render");
+    console.log(this);
+    if(!this.props.loading) {
+      return (
+        <div className="dashboard-page">
+          <h1>This is dashboard</h1>
+          <SearchBar></SearchBar>
+          <p>Time Elapsed: {this.props.timeelapsed}ms.</p>
+          <WeeklyBookings week={this.props.weekSplit}></WeeklyBookings>
+          <CardWidget title="Bookings today" number={this.props.today.flat().length }></CardWidget>
+          <CardWidget title="Bookings upcoming" number={this.props.upcoming.length }></CardWidget>
+          <CardWidget title="Bookings ongoing" number={this.props.ongoing.length }></CardWidget>
+          <CardWidget title="Bookings pending" number={this.props.pending.length }></CardWidget>
+          <CardWidget title="Bookings month" number={this.props.monthly.length }></CardWidget>
+          <p>-----------------------------</p>
+          <CardWidget title="Fleet Busy" number={this.props.busy.length }></CardWidget>
+          <CardWidget title="Next Free" number={this.props.nextAvailableCar}></CardWidget>
+          <CardWidget title="Next Busy" number={this.props.nextBusyCar}></CardWidget>
+          <CardWidget title="Car of the month" number={this.props.carOfTheMonth.nombre + " ("+this.props.carOfTheMonth.numbookings+" reservas)"}></CardWidget>
+          <p>-----------------------------</p>
+          <CardWidget title="Today Invoiced" number={ crHelpers.moneyFormatter(this.props.todayInvoiced) + "€"}></CardWidget>
+          <CardWidget title={moment().format('MMMM') + " invoiced"} number={ crHelpers.moneyFormatter(this.props.monthInvoiced) + "€"}></CardWidget>
+          <CardWidget title={moment().format('Q') + " trimestre invoiced"} number={crHelpers.moneyFormatter(this.props.quarterInvoiced) + "€"}></CardWidget>
+          <CardWidget title={moment().format('YYYY') + " invoiced"} number={ crHelpers.moneyFormatter(this.props.yearInvoiced) + "€ in " + this.props.yearBookings.length+ " bookings"}></CardWidget>
+          <p>-----------------------------</p>
+          <CardWidget title="Today Tasks" number={this.props.todaysTasks.length}></CardWidget>
+          <CardWidget title="Month Tasks" number={this.props.monthTasks.length}></CardWidget>
+          <CardWidget title="Quarter Tasks" number={this.props.quarterTasks.length}></CardWidget>
+          <CardWidget title="Year Tasks" number={this.props.yearTasks.length}></CardWidget>
+          <p>-----------------------------</p>
+          <CardWidget title="Today Expenses" number={crHelpers.moneyFormatter(this.props.todaysExp) + "€"}></CardWidget>
+          <CardWidget title="Month Expenses" number={crHelpers.moneyFormatter(this.props.monthExp) + "€"}></CardWidget>
+          <CardWidget title="Quarter Expenses" number={crHelpers.moneyFormatter(this.props.quarterExp) + "€"}></CardWidget>
+          <CardWidget title="Year Expenses" number={crHelpers.moneyFormatter(this.props.yearExp) + "€"}></CardWidget>
+          <p>-----------------------------</p>
+          <CardWidget title="Workers busy today" number={this.props.workersBusyToday.length}></CardWidget>
+          <CardWidget title="Workers busy month" number={this.props.workersBusyMonth.length}></CardWidget>
+          <CardWidget title="Workers of the month" number={this.props.workerOfTheMonth.name + " " + this.props.workerOfTheMonth.tasks + " tasks"}></CardWidget>
+          <div>
+          </div>
+          <ul>
+            this.renderBookings()
+          </ul>
         </div>
-        <ul>
-          this.renderBookings()
-        </ul>
-      </div>
-    );
+      );
+    } else {
+      return (
+        <p>Loading..</p>
+      );
+    }
   }
 }
 
 export default withTracker(() => {
   // bookings here
-  Meteor.subscribe('bookings');
-  Meteor.subscribe('fleet');
-  Meteor.subscribe('workers');
-  Meteor.subscribe('tasks');
+  let bookingsub = Meteor.subscribe('bookings');
+  let fleetsub = Meteor.subscribe('fleet');
+  let workerssub = Meteor.subscribe('workers');
+  let taskssub = Meteor.subscribe('tasks');
 
+  const handles = [
+    bookingsub, fleetsub, workerssub, taskssub
+  ]
+
+
+
+  const loading = handles.some(handle => !handle.ready());
 
   let monthIni = moment(new Date()).startOf('month');
   let monthEnd = moment(new Date()).endOf('month');
 
+  let elapsed = 0;
+
+  if(!loading) {
+    if (crHelpers.firstFlag) {
+      elapsed = Math.abs(moment(crHelpers.startedLoading).diff(moment(new Date()), 'milliseconds'));
+      crHelpers.firstFlag = false;
+    }
+  } 
  
 
 
@@ -197,7 +236,9 @@ export default withTracker(() => {
   console.log("facturado mes", monthlyFacturado);
   */
 
-  console.log("test api", workersAPI.workersBusyToday());
+  console.log("test api", bookingsAPI.nextBookingStart());
+
+  console.log("loading", loading);
 
 
   /////////////////////
@@ -205,20 +246,23 @@ export default withTracker(() => {
 
 
   return {
-
+    timeelapsed: elapsed,
     weekSplit: bookingsAPI.unnaturalWeeklyBookingsSevenDaysSplit(),
     today: bookingsAPI.todayBookings(),
     ongoing: bookingsAPI.ongoingBookings(),
     pending: bookingsAPI.pendingBookings(),
     monthly: bookingsAPI.monthlyBookings(),
+    upcoming: bookingsAPI.upcomingBookings(),
     week: bookingsAPI.unnaturalWeeklyBookings(),
+    nextBookingStart: bookingsAPI.nextBookingStart(),
+    nextBookingEnd: bookingsAPI.nextBookingEnds(),
 
     busy: fleetAPI.fleetBusyCars(),
     nextAvailableCar: fleetAPI.nextAvailableCar(),
     nextBusyCar: fleetAPI.nextBusyCar(),
     carOfTheMonth: fleetAPI.carOfTheMonth(),
 
-    todayInvoiced: bookingsAPI.todayInvoiced(),
+    todayInvoiced:  bookingsAPI.todayInvoiced(),
     monthInvoiced: bookingsAPI.monthInvoiced(),
     quarterInvoiced: bookingsAPI.quarterInvoiced(),
     yearInvoiced: bookingsAPI.yearInvoiced(),
@@ -233,5 +277,11 @@ export default withTracker(() => {
     monthExp: tasksAPI.monthExpenses(),
     quarterExp: tasksAPI.quarterExpenses(),
     yearExp: tasksAPI.yearExpenses(),
+
+    workersBusyToday: workersAPI.workersBusyToday(),
+    workersBusyMonth: workersAPI.workersBusyMonth(),
+    workerOfTheMonth: workersAPI.workerOfTheMonth(),
+
+    loading
   };
 })(Dashboard);
